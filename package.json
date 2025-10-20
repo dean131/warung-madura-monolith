@@ -1,0 +1,43 @@
+{
+  "name": "warung-madura-monolith",
+  "version": "1.0.0",
+  "description": "Monolithic backend for Warung Madura",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "prettier": "npx prettier --write .",
+    "migrate": "knex migrate:latest",
+    "seed": "knex seed:run",
+    "release": "standard-version"
+  },
+  "author": "Ilham Dean Abdillah",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/runtime": "^7.18.3",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.0",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.3",
+    "express-validator": "^6.14.0",
+    "hbs": "^4.2.0",
+    "jsonwebtoken": "^8.5.1",
+    "knex": "^3.1.0",
+    "knex-paginate": "^3.1.4",
+    "lodash": "^4.17.21",
+    "objection": "^3.1.4",
+    "pg": "^8.8.0",
+    "swagger-jsdoc": "^6.2.1",
+    "swagger-ui-express": "^4.4.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "nodemon": "^2.0.15",
+    "prettier": "^2.8.1",
+    "standard-version": "^9.5.0"
+  }
+}
