@@ -13,7 +13,7 @@
     "release": "standard-version"
   },
   "author": "Ilham Dean Abdillah",
-  "license": "ISC",
+  "license": "MIT License",
   "dependencies": {
     "@babel/runtime": "^7.18.3",
     "bcryptjs": "^2.4.3",

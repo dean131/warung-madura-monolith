@@ -1,0 +1,255 @@
+meta {
+  name: Products
+  seq: 3
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  # Warung Madura API - Products
+  
+  This document describes the API endpoints for managing products.
+  
+  **Authentication:** All product endpoints require a valid JWT Bearer token in the `Authorization` header.
+  
+  ***
+  
+  ## Endpoints
+  
+  ### 1. List Products
+  
+  Retrieves a paginated list of all non-deleted products. Supports cursor-based pagination.
+  
+  * **Method:** `GET`
+  * **Path:** `/api/products`
+  * **Authentication:** Required (Bearer Token).
+  * **Query Parameters:**
+      * `limit` (integer, optional, default: 10, max: 100): Number of items per page.
+      * `after` (string, optional): Base64 encoded cursor to fetch items *after* this cursor (for next page).
+      * `before` (string, optional): Base64 encoded cursor to fetch items *before* this cursor (for previous page).
+      * **Note:** `after` and `before` cannot be used simultaneously.
+  * **Request Body:** None.
+  * **Success Response (200 OK):**
+  
+      ```json
+      {
+          "status": 200,
+          "message": "Products retrieved successfully",
+          "data": [
+              {
+                  "id": "uuid-string-product-1",
+                  "name": "Product Name 1",
+                  "price": "15000.00", // String representation of decimal
+                  "stock_quantity": 50,
+                  "category_id": "uuid-string-category-1",
+                  "created_at": "timestamp",
+                  "updated_at": "timestamp",
+                  "category": { // Eager-loaded category details
+                      "id": "uuid-string-category-1",
+                      "name": "Category Name 1",
+                      "created_at": "timestamp",
+                      "updated_at": "timestamp"
+                  }
+              }
+              // ... more products up to limit
+          ],
+          "paging": {
+              "has_next_page": true, // boolean
+              "has_prev_page": false, // boolean
+              "cursors": {
+                  "next": "base64_encoded_next_cursor_string | null",
+                  "prev": "base64_encoded_prev_cursor_string | null"
+              }
+          },
+          "links": {
+              "next": "/api/products?limit=10&after=CURSOR | null", // Full URL for next page
+              "prev": "/api/products?limit=10&before=CURSOR | null" // Full URL for previous page
+          }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `400 Bad Request`: "Cannot use both \"after\" and \"before\" cursors simultaneously".
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `422 Unprocessable Entity`: Invalid query parameter format (e.g., non-integer limit, invalid cursor).
+      * `500 Internal Server Error`: General server error.
+  
+  ---
+  
+  ### 2. Create Product
+  
+  Creates a new product.
+  
+  * **Method:** `POST`
+  * **Path:** `/api/products`
+  * **Authentication:** Required (Bearer Token).
+  * **Request Body:** `application/json`
+  
+      ```json
+      {
+        "name": "New Product Name",
+        "price": 25000.50,
+        "stock_quantity": 100,
+        "category_id": "uuid-string-of-existing-category"
+      }
+      ```
+  
+      * `name` (string, required): 1-255 characters.
+      * `price` (number, required): Non-negative decimal value (up to 2 decimal places).
+      * `stock_quantity` (integer, required): Non-negative integer.
+      * `category_id` (string, required): UUID of an existing, non-deleted category.
+  
+  * **Success Response (201 Created):**
+  
+      ```json
+      {
+        "status": 201,
+        "message": "Product created successfully",
+        "data": {
+          "id": "uuid-string-of-new-product",
+          "name": "New Product Name",
+          "price": "25000.50", // May be returned as string from DB
+          "stock_quantity": 100,
+          "category_id": "uuid-string-of-existing-category",
+          "created_at": "timestamp",
+          "updated_at": "timestamp"
+          // Does not include category details by default on create
+        }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `400 Bad Request`: "Category with ID \"...\" not found." or "Price/Stock cannot be negative."
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `422 Unprocessable Entity`: Validation errors (missing fields, invalid formats, negative values). See `errors` array.
+      * `500 Internal Server Error`: General server error.
+  
+  ---
+  
+  ### 3. Get Product Details
+  
+  Retrieves details for a single product by its ID, including its category.
+  
+  * **Method:** `GET`
+  * **Path:** `/api/products/:id`
+  * **Authentication:** Required (Bearer Token).
+  * **URL Parameters:**
+      * `id` (string, required): The UUID of the product to retrieve.
+  * **Request Body:** None.
+  * **Success Response (200 OK):**
+  
+      ```json
+      {
+        "status": 200,
+        "message": "Product retrieved successfully",
+        "data": {
+          "id": "uuid-string-product",
+          "name": "Product Name",
+          "price": "15000.00",
+          "stock_quantity": 50,
+          "category_id": "uuid-string-category",
+          "created_at": "timestamp",
+          "updated_at": "timestamp",
+          "category": {
+              "id": "uuid-string-category",
+              "name": "Category Name",
+              "created_at": "timestamp",
+              "updated_at": "timestamp"
+          }
+        }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `404 Not Found`: "Product not found."
+      * `500 Internal Server Error`: General server error.
+  
+  ---
+  
+  ### 4. Update Product
+  
+  Updates details of an existing product.
+  
+  * **Method:** `PUT`
+  * **Path:** `/api/products/:id`
+  * **Authentication:** Required (Bearer Token).
+  * **URL Parameters:**
+      * `id` (string, required): The UUID of the product to update.
+  * **Request Body:** `application/json` (Include only fields to update)
+  
+      ```json
+      {
+        "name": "Updated Product Name",
+        "price": 26000.00,
+        "stock_quantity": 95,
+        "category_id": "uuid-string-of-another-category"
+      }
+      ```
+  
+      * `name` (string, optional): 1-255 characters.
+      * `price` (number, optional): Non-negative decimal value.
+      * `stock_quantity` (integer, optional): Non-negative integer.
+      * `category_id` (string, optional): UUID of an existing, non-deleted category.
+  
+  * **Success Response (200 OK):**
+  
+      ```json
+      {
+        "status": 200,
+        "message": "Product updated successfully",
+        "data": {
+          "id": "uuid-string-product",
+          "name": "Updated Product Name",
+          "price": "26000.00",
+          "stock_quantity": 95,
+          "category_id": "uuid-string-of-another-category",
+          "created_at": "timestamp",
+          "updated_at": "timestamp", // Reflects update time
+          "category": { // Includes updated category if eager-loaded on refetch
+              "id": "uuid-string-of-another-category",
+              "name": "Another Category Name",
+              "created_at": "timestamp",
+              "updated_at": "timestamp"
+          }
+        }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `400 Bad Request`: "Category with ID \"...\" not found." or "Price/Stock cannot be negative."
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `404 Not Found`: "Product not found."
+      * `422 Unprocessable Entity`: Validation errors (invalid formats, negative values).
+      * `500 Internal Server Error`: General server error.
+  
+  ---
+  
+  ### 5. Delete Product
+  
+  Soft deletes a product by its ID (sets the `deleted_at` timestamp).
+  
+  * **Method:** `DELETE`
+  * **Path:** `/api/products/:id`
+  * **Authentication:** Required (Bearer Token).
+  * **URL Parameters:**
+      * `id` (string, required): The UUID of the product to delete.
+  * **Request Body:** None.
+  * **Success Response (200 OK):**
+  
+      ```json
+      {
+        "status": 200,
+        "message": "Product deleted successfully"
+      }
+      ```
+  
+  * **Error Responses:**
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `404 Not Found`: "Product not found."
+      * `500 Internal Server Error`: General server error.
+  
+  ***
+}

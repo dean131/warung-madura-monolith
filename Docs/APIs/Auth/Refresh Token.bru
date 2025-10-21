@@ -1,0 +1,42 @@
+meta {
+  name: Refresh Token
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/refresh
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "refreshToken": "{{refreshToken}}"
+  }
+}
+
+script:post-response {
+  const resBody = res.getBody();
+  
+  if (res.getStatus() === 200 && resBody && resBody.data) {
+    const accessToken = resBody.data.accessToken;
+  
+    if (accessToken) {
+      bru.setVar('accessToken', accessToken);
+  
+      console.log('Access Token set successfully.');
+    } else {
+      console.error('Error: refreshToken not found in response data.');
+    }
+  } else {
+    console.error('Login request failed or response format is incorrect.');
+    console.log('Status:', res.getStatus());
+    console.log('Body:', resBody);
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

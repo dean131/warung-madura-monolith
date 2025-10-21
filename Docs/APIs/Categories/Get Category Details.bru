@@ -1,0 +1,20 @@
+meta {
+  name: Get Category Details
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/categories/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 94ae7466-bfe5-41fd-81b1-8ed63bde8c83
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

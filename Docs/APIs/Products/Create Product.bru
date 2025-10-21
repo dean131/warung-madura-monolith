@@ -1,0 +1,25 @@
+meta {
+  name: Create Product
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/products
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "New Product Name",
+    "price": 25000.50,
+    "stock_quantity": 100,
+    "category_id": "1ceb320d-eece-440a-956c-3b348d2e5e97"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

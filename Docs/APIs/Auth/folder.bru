@@ -1,0 +1,171 @@
+meta {
+  name: Auth
+  seq: 1
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  # Warung Madura API - Authentication
+  
+  This document describes the API endpoints for user authentication.
+  
+  ***
+  
+  ## Endpoints
+  
+  ### 1. Register User
+  
+  Registers a new user account.
+  
+  * **Method:** `POST`
+  * **Path:** `/api/register`
+  * **Authentication:** None required.
+  * **Request Body:** `application/json`
+  
+      ```json
+      {
+        "username": "your_username",
+        "email": "user@example.com",
+        "password": "your_password"
+      }
+      ```
+  
+      * `username` (string, required): Alphanumeric, 3-30 characters. Must be unique.
+      * `email` (string, required): Valid email format. Must be unique.
+      * `password` (string, required): Minimum 6 characters.
+  
+  * **Success Response (200 OK):**
+  
+      ```json
+      {
+        "status": 200,
+        "message": "User registered successfully!",
+        "data": {
+          "id": "uuid-string-of-user",
+          "username": "your_username",
+          "email": "user@example.com",
+          "created_at": "timestamp",
+          "updated_at": "timestamp"
+        }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `409 Conflict`: "Username is already in use." or "Email is already in use."
+      * `422 Unprocessable Entity`: Validation errors (e.g., missing fields, invalid format). See `errors` array in response body for details.
+      * `500 Internal Server Error`: General server error.
+  
+  ---
+  
+  ### 2. Login User
+  
+  Logs in an existing user using username or email.
+  
+  * **Method:** `POST`
+  * **Path:** `/api/login`
+  * **Authentication:** None required.
+  * **Request Body:** `application/json`
+  
+      ```json
+      {
+        "loginIdentifier": "your_username_or_email",
+        "password": "your_password"
+      }
+      ```
+  
+      * `loginIdentifier` (string, required): The user's username or email address.
+      * `password` (string, required): The user's password.
+  
+  * **Success Response (200 OK):**
+  
+      ```json
+      {
+        "message": "Login success!",
+        "data": {
+          "id": "uuid-string-of-user",
+          "username": "your_username",
+          "email": "user@example.com",
+          "accessToken": "your_jwt_access_token",
+          "refreshToken": "your_database_refresh_token_string"
+        }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `400 Bad Request`: "Invalid Credentials!"
+      * `422 Unprocessable Entity`: Validation errors (e.g., missing fields).
+      * `500 Internal Server Error`: General server error.
+  
+  ---
+  
+  ### 3. Refresh Access Token
+  
+  Generates a new Access Token using a valid Refresh Token.
+  
+  * **Method:** `POST`
+  * **Path:** `/api/refresh`
+  * **Authentication:** None required directly, but a valid `refreshToken` must be provided.
+  * **Request Body:** `application/json`
+  
+      ```json
+      {
+        "refreshToken": "your_database_refresh_token_string"
+      }
+      ```
+  
+      * `refreshToken` (string, required): The refresh token obtained during login.
+  
+  * **Success Response (200 OK):**
+  
+      ```json
+      {
+        "message": "Token refreshed successfully!",
+        "data": {
+          "accessToken": "your_new_jwt_access_token"
+        }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `401 Unauthorized`: "Invalid or expired refresh token." or "User not found for this token."
+      * `422 Unprocessable Entity`: Validation errors (e.g., missing `refreshToken`).
+      * `500 Internal Server Error`: General server error.
+  
+  ---
+  
+  ### 4. Logout User
+  
+  Logs out the user by invalidating the provided Refresh Token.
+  
+  * **Method:** `POST`
+  * **Path:** `/api/logout`
+  * **Authentication:** None required directly, but a valid `refreshToken` must be provided to invalidate.
+  * **Request Body:** `application/json`
+  
+      ```json
+      {
+        "refreshToken": "your_database_refresh_token_string"
+      }
+      ```
+  
+      * `refreshToken` (string, required): The refresh token to invalidate.
+  
+  * **Success Response (200 OK):**
+  
+      ```json
+      {
+        "status": 200,
+        "message": "Logout successful!"
+      }
+      ```
+      *(Note: No data payload is returned on successful logout).*
+  
+  * **Error Responses:**
+      * `422 Unprocessable Entity`: Validation errors (e.g., missing `refreshToken`).
+      * `500 Internal Server Error`: General server error.
+  
+  ***
+}

@@ -1,0 +1,46 @@
+meta {
+  name: Login
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/login
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "loginIdentifier": "user1@example.com",
+    "password": "strongpassword123"
+  }
+}
+
+script:post-response {
+  const resBody = res.getBody();
+  
+  if (res.getStatus() === 200 && resBody && resBody.data) {
+    const accessToken = resBody.data.accessToken;
+    const refreshToken = resBody.data.refreshToken;
+  
+    if (accessToken && refreshToken) {
+      bru.setVar('accessToken', accessToken);
+      bru.setVar('refreshToken', refreshToken);
+  
+      console.log('Access Token set successfully.');
+      console.log('Refresh Token set successfully.');
+    } else {
+      console.error('Error: accessToken or refreshToken not found in response data.');
+    }
+  } else {
+    console.error('Login request failed or response format is incorrect.');
+    console.log('Status:', res.getStatus());
+    console.log('Body:', resBody);
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
