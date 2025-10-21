@@ -1,0 +1,20 @@
+meta {
+  name: Delete Order
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/products/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 972698c6-0c20-4ff5-b4a0-631caa7646a3
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

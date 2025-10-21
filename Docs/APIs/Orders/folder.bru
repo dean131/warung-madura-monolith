@@ -1,0 +1,164 @@
+meta {
+  name: Orders
+  seq: 5
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  # Warung Madura API - Orders
+  
+  This document describes the API endpoints for managing orders.
+  
+  **Authentication:** All order endpoints require a valid JWT Bearer token in the `Authorization` header.
+  
+  ***
+  
+  ## Endpoints
+  
+  ### 1. Place Order
+  
+  Creates a new order, processes the items, and updates product stock within a transaction.
+  
+  * **Method:** `POST`
+  * **Path:** `/api/orders`
+  * **Authentication:** Required (Bearer Token). The user ID from the token will be associated with the order.
+  * **Request Body:** `application/json`
+  
+      ```json
+      {
+        "items": [
+          {
+            "product_id": "uuid-of-product-1",
+            "quantity": 2
+          },
+          {
+            "product_id": "uuid-of-product-2",
+            "quantity": 1
+          }
+        ]
+      }
+      ```
+  
+      * `items` (array, required): An array containing at least one item object.
+          * `product_id` (string, required): The UUID of the product being ordered.
+          * `quantity` (integer, required): The positive integer quantity of the product being ordered.
+  
+  * **Success Response (201 Created):**
+  
+      ```json
+      {
+        "status": 201,
+        "message": "Order placed successfully",
+        "data": {
+          "id": "uuid-string-of-new-order",
+          "user_id": "uuid-string-of-user",
+          "total_amount": "55000.00", // Calculated total as string
+          "status": "COMPLETED", // Status after successful transaction
+          "created_at": "timestamp",
+          "updated_at": "timestamp",
+          "items": [ // Eager-loaded items
+            {
+              "id": "uuid-string-of-item-1",
+              "order_id": "uuid-string-of-new-order",
+              "product_id": "uuid-of-product-1",
+              "quantity": 2,
+              "price_per_item": "15000.00",
+              "created_at": "timestamp",
+              "updated_at": "timestamp",
+              "product": { // Eager-loaded product details
+                "id": "uuid-of-product-1",
+                "name": "Product Name 1",
+                "price": "15000.00",
+                // ... other product fields if needed
+              }
+            },
+            {
+              "id": "uuid-string-of-item-2",
+              "order_id": "uuid-string-of-new-order",
+              "product_id": "uuid-of-product-2",
+              "quantity": 1,
+              "price_per_item": "25000.00",
+              "created_at": "timestamp",
+              "updated_at": "timestamp",
+              "product": {
+                "id": "uuid-of-product-2",
+                "name": "Product Name 2",
+                "price": "25000.00",
+                 // ...
+              }
+            }
+          ]
+        }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `400 Bad Request`:
+          * "Order must contain at least one item."
+          * `Product with ID [...] not found.`
+          * `Quantity for product "[...]" must be positive.`
+          * `Insufficient stock for product "[...]". Available: [...], Requested: [...].`
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `409 Conflict`: `Failed to update stock for product ID [...], possibly due to concurrent modification.` (Transaction rollback)
+      * `422 Unprocessable Entity`: Validation errors (e.g., `items` array missing or empty, invalid `product_id` format, non-positive `quantity`). See `errors` array.
+      * `500 Internal Server Error`: General server error or transaction failure.
+  
+  ---
+  
+  ### 2. Get Order Details
+  
+  Retrieves details for a specific order placed by the authenticated user, including order items and product details.
+  
+  * **Method:** `GET`
+  * **Path:** `/api/orders/:id`
+  * **Authentication:** Required (Bearer Token).
+  * **URL Parameters:**
+      * `id` (string, required): The UUID of the order to retrieve.
+  * **Request Body:** None.
+  * **Success Response (200 OK):**
+  
+      ```json
+      {
+        "status": 200,
+        "message": "Order details retrieved successfully",
+        "data": {
+          "id": "uuid-string-of-order",
+          "user_id": "uuid-string-of-authenticated-user",
+          "total_amount": "55000.00",
+          "status": "COMPLETED",
+          "created_at": "timestamp",
+          "updated_at": "timestamp",
+          "items": [
+            {
+              "id": "uuid-string-of-item-1",
+              "order_id": "uuid-string-of-order",
+              "product_id": "uuid-of-product-1",
+              "quantity": 2,
+              "price_per_item": "15000.00",
+              "created_at": "timestamp",
+              "updated_at": "timestamp",
+              "product": {
+                "id": "uuid-of-product-1",
+                "name": "Product Name 1",
+                "price": "15000.00"
+                 // ... other relevant product fields if needed ...
+              }
+            }
+            // ... more items
+          ]
+          // user details are usually not included here unless explicitly requested
+        }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `403 Forbidden`: "Forbidden: You do not have permission to view this order." (Order belongs to another user).
+      * `404 Not Found`: "Order not found."
+      * `500 Internal Server Error`: General server error.
+  
+  ***
+}
