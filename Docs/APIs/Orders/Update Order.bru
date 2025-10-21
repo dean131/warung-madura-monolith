@@ -1,0 +1,26 @@
+meta {
+  name: Update Order
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/orders/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 972698c6-0c20-4ff5-b4a0-631caa7646a3
+}
+
+body:json {
+  {
+    "name": "Update Product Name"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

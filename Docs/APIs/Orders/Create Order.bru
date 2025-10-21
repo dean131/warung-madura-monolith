@@ -1,0 +1,31 @@
+meta {
+  name: Create Order
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "items": [
+      {
+        "product_id": "576882b4-35ed-42f2-9f5a-bb9c075745f2",
+        "quantity": 2
+      },
+      {
+        "product_id": "6f8a214f-7cc2-4a13-a9de-b659b0661413",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
