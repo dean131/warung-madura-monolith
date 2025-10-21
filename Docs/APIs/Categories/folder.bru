@@ -1,0 +1,200 @@
+meta {
+  name: Categories
+  seq: 2
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  # Warung Madura API - Categories
+  
+  This document describes the API endpoints for managing product categories.
+  
+  **Authentication:** All category endpoints require a valid JWT Bearer token in the `Authorization` header.
+  
+  ***
+  
+  ## Endpoints
+  
+  ### 1. List Categories
+  
+  Retrieves a list of all non-deleted categories.
+  
+  * **Method:** `GET`
+  * **Path:** `/api/categories`
+  * **Authentication:** Required (Bearer Token).
+  * **Request Body:** None.
+  * **Success Response (200 OK):**
+  
+      ```json
+      {
+        "status": 200,
+        "message": "Categories retrieved successfully",
+        "data": [
+          {
+            "id": "uuid-string-of-category-1",
+            "name": "Category Name 1",
+            "created_at": "timestamp",
+            "updated_at": "timestamp"
+          },
+          {
+            "id": "uuid-string-of-category-2",
+            "name": "Category Name 2",
+            "created_at": "timestamp",
+            "updated_at": "timestamp"
+          }
+          // ... more categories
+        ]
+      }
+      ```
+  
+  * **Error Responses:**
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `500 Internal Server Error`: General server error.
+  
+  ---
+  
+  ### 2. Create Category
+  
+  Creates a new product category.
+  
+  * **Method:** `POST`
+  * **Path:** `/api/categories`
+  * **Authentication:** Required (Bearer Token).
+  * **Request Body:** `application/json`
+  
+      ```json
+      {
+        "name": "New Category Name"
+      }
+      ```
+  
+      * `name` (string, required): The name for the new category (1-255 characters). Must be unique.
+  
+  * **Success Response (201 Created):**
+  
+      ```json
+      {
+        "status": 201,
+        "message": "Category created successfully",
+        "data": {
+          "id": "uuid-string-of-new-category",
+          "name": "New Category Name",
+          "created_at": "timestamp",
+          "updated_at": "timestamp"
+        }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `409 Conflict`: "Category with name \"[Name]\" already exists."
+      * `422 Unprocessable Entity`: Validation errors (e.g., missing name, name too long). See `errors` array in response body.
+      * `500 Internal Server Error`: General server error.
+  
+  ---
+  
+  ### 3. Get Category Details
+  
+  Retrieves details for a single category by its ID.
+  
+  * **Method:** `GET`
+  * **Path:** `/api/categories/:id`
+  * **Authentication:** Required (Bearer Token).
+  * **URL Parameters:**
+      * `id` (string, required): The UUID of the category to retrieve.
+  * **Request Body:** None.
+  * **Success Response (200 OK):**
+  
+      ```json
+      {
+        "status": 200,
+        "message": "Category retrieved successfully",
+        "data": {
+          "id": "uuid-string-of-category",
+          "name": "Category Name",
+          "created_at": "timestamp",
+          "updated_at": "timestamp"
+        }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `404 Not Found`: "Category not found."
+      * `500 Internal Server Error`: General server error.
+  
+  ---
+  
+  ### 4. Update Category
+  
+  Updates the name of an existing category.
+  
+  * **Method:** `PUT`
+  * **Path:** `/api/categories/:id`
+  * **Authentication:** Required (Bearer Token).
+  * **URL Parameters:**
+      * `id` (string, required): The UUID of the category to update.
+  * **Request Body:** `application/json`
+  
+      ```json
+      {
+        "name": "Updated Category Name"
+      }
+      ```
+  
+      * `name` (string, required): The new name for the category (1-255 characters). Must be unique among other categories.
+  
+  * **Success Response (200 OK):**
+  
+      ```json
+      {
+        "status": 200,
+        "message": "Category updated successfully",
+        "data": {
+          "id": "uuid-string-of-category",
+          "name": "Updated Category Name",
+          "created_at": "timestamp",
+          "updated_at": "timestamp" // Reflects update time
+        }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `404 Not Found`: "Category not found."
+      * `409 Conflict`: "Category with name \"[Name]\" already exists." (if trying to change to an existing name).
+      * `422 Unprocessable Entity`: Validation errors (e.g., name too long).
+      * `500 Internal Server Error`: General server error.
+  
+  ---
+  
+  ### 5. Delete Category
+  
+  Soft deletes a category by its ID (sets the `deleted_at` timestamp).
+  
+  * **Method:** `DELETE`
+  * **Path:** `/api/categories/:id`
+  * **Authentication:** Required (Bearer Token).
+  * **URL Parameters:**
+      * `id` (string, required): The UUID of the category to delete.
+  * **Request Body:** None.
+  * **Success Response (200 OK):**
+  
+      ```json
+      {
+        "status": 200,
+        "message": "Category deleted successfully"
+      }
+      ```
+      *(Note: No data payload is returned on successful deletion).*
+  
+  * **Error Responses:**
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `404 Not Found`: "Category not found."
+      * `500 Internal Server Error`: General server error.
+  
+  ***
+}

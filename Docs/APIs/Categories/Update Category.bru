@@ -1,0 +1,26 @@
+meta {
+  name: Update Category
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/categories/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 1ceb320d-eece-440a-956c-3b348d2e5e97
+}
+
+body:json {
+  {
+    "name": "Update Category Name"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
