@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is the backend system for a "Warung Madura" application, built as a monolithic application using Node.js and Express. It provides core functionalities like authentication, product management, and order processing.
+This project is the backend system for a "Warung Madura" application, built as a monolithic application using Node.js and Express. It provides core functionalities like authentication, product management, order processing, and a shopping cart.
 
 ---
 
@@ -12,6 +12,7 @@ This project is the backend system for a "Warung Madura" application, built as a
 -   **Database:** PostgreSQL
 -   **ORM/Query Builder:** Knex.js, Objection.js
 -   **Authentication:** JWT (Access Tokens + Refresh Tokens stored in DB)
+-   **Cart:** Redis
 -   **Validation:** express-validator
 -   **Containerization:** Docker, Docker Compose (for development)
 -   **Versioning:** standard-version (Conventional Commits)
@@ -20,23 +21,14 @@ This project is the backend system for a "Warung Madura" application, built as a
 
 ## Features
 
--   **Authentication:**
-    -   User Registration (`/api/register`)
-    -   Login with username or email (`/api/login`) - Provides JWT Access Token and Refresh Token.
-    -   Access Token Refresh (`/api/refresh`) - Uses Refresh Token to get a new Access Token.
-    -   Logout (`/api/logout`) - Invalidates the provided Refresh Token.
--   **Database:**
-    -   Uses PostgreSQL.
-    -   Includes a `BaseModel` implementing **Soft Deletes** (`deleted_at` column) automatically applied to extending models (like `User`).
--   **API:**
-    -   Standardized JSON responses (`successResponse`, `errorResponse`, `cursorPaginatedResponse`).
-    -   Global error handling middleware.
-    -   JWT Authentication middleware (`auth.middleware.js`).
-    -   API Documentation via Swagger (`/docs`).
--   **Development:**
-    -   Dockerized development environment using `docker-compose`.
-    -   Automatic server restarts on code changes via `nodemon`.
-    -   Automatic versioning and changelog generation using `standard-version` and Conventional Commits.
+-   **Authentication:** Register, Login (username/email), Refresh Token, Logout.
+-   **Categories:** CRUD operations for product categories (with soft deletes).
+-   **Products:** CRUD operations for products (with soft deletes), includes category relationship, paginated listing (cursor-based).
+-   **Shopping Cart (Redis):** Add/update item, view cart, remove item, clear cart.
+-   **Orders:** Place order (transactionally updates stock), view order details, view user's order history (paginated).
+-   **Database:** PostgreSQL with soft delete (`deleted_at`) pattern via `BaseModel`.
+-   **API:** Standardized responses, global error handling, JWT middleware, Swagger docs.
+-   **Development:** Dockerized environment, `nodemon` for auto-reload, `standard-version` for releases.
 
 ---
 
@@ -53,7 +45,7 @@ This project is the backend system for a "Warung Madura" application, built as a
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/dean131/warung-madura-monolith
+    git clone <your-repository-url>
     cd warung-madura-monolith
     ```
 
@@ -70,7 +62,7 @@ This project is the backend system for a "Warung Madura" application, built as a
     ```bash
     cp .env.example .env
     ```
-    Edit the `.env` file and fill in your specific database credentials (`DB_USER`, `DB_PASSWORD`, `DB_DATABASE`), ensure `DB_HOST` is set correctly for Docker (usually the service name, e.g., `db`), and set a strong `APP_KEY` for JWT signing. Adjust ports if necessary.
+    Edit the `.env` file and fill in your specific database credentials (`DB_USER`, `DB_PASSWORD`, `DB_DATABASE`), ensure `DB_HOST` is `db` (the Docker service name), ensure `REDIS_URL` is `redis://redis:6379`, and set a strong `APP_KEY`. Adjust ports if necessary.
 
 ---
 
@@ -80,51 +72,82 @@ This project is the backend system for a "Warung Madura" application, built as a
     From the root directory, run:
 
     ```bash
-    docker-compose up --build
+    docker-compose up --build -d
     ```
 
-    _Use the `-d` flag to run in detached mode._
+    _(Use `-d` to run in detached mode)._
 
 2.  **Run Database Migrations:**
-    Once the containers are running (especially the database), open a **new terminal window** or tab and execute the migrations inside the application container:
+    Once the containers are running, execute the migrations inside the application container:
 
     ```bash
     docker-compose exec app npm run migrate
     ```
 
-    _You only need to run migrations the first time or when new migration files are added._
+3.  **(Optional) Run Database Seeds:**
+    To populate the database with initial sample data:
 
-3.  **Accessing the Application:**
+    ```bash
+    docker-compose exec app npm run seed
+    ```
+
+4.  **Accessing the Application:**
     -   The API should be available at `http://localhost:<APP_PORT>` (e.g., `http://localhost:8080` by default). API routes are prefixed with `/api`.
     -   The Swagger API documentation is available at `http://localhost:<APP_PORT>/docs` (e.g., `http://localhost:8080/docs`).
 
 ---
 
+## How to Use (API Flow)
+
+1.  **Register a User:**
+
+    -   Send a `POST` request to `/api/register` with `username`, `email`, and `password` in the JSON body.
+
+2.  **Login:**
+
+    -   Send a `POST` request to `/api/login` with `loginIdentifier` (username or email) and `password`.
+    -   **Save the `accessToken` and `refreshToken`** from the response data. You'll need these for subsequent requests. (Tools like Bruno or Postman can automate saving these to environment variables).
+
+3.  **Access Protected Routes:**
+
+    -   For endpoints requiring authentication (Categories, Products, Cart, Orders), include the `Authorization` header with the value `Bearer YOUR_ACCESS_TOKEN`.
+    -   Example: `GET /api/categories` with the header `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+
+4.  **Manage Cart (Example):**
+
+    -   Add an item: `POST /api/cart` with `{"product_id": "...", "quantity": 2}` and the `Authorization` header.
+    -   View cart: `GET /api/cart` with the `Authorization` header.
+    -   Remove item: `DELETE /api/cart/items/:productId` with the `Authorization` header.
+
+5.  **Place an Order:**
+
+    -   Ensure your cart has items (or construct the `items` array manually).
+    -   Send a `POST` request to `/api/orders` with `{"items": [{"product_id": "...", "quantity": 1}, ...]}` and the `Authorization` header.
+    -   On success, the cart in Redis is _not_ automatically cleared by this endpoint (you might want to add a `DELETE /api/cart` call client-side after a successful order).
+
+6.  **Refresh Token:**
+
+    -   If your `accessToken` expires (you get a 401 Unauthorized, possibly with a specific message like "Token has expired"), send a `POST` request to `/api/refresh` with your `refreshToken` in the body: `{"refreshToken": "YOUR_REFRESH_TOKEN"}`.
+    -   Save the new `accessToken` returned in the response and retry the original request.
+
+7.  **Logout:**
+    -   To invalidate a `refreshToken` (e.g., when the user explicitly logs out), send a `POST` request to `/api/logout` with the `refreshToken`: `{"refreshToken": "YOUR_REFRESH_TOKEN"}`.
+    -   Clear both `accessToken` and `refreshToken` stored on the client-side.
+
+---
+
 ## Stopping the Application
 
--   If running in the foreground, press `Ctrl+C` in the terminal where `docker-compose up` is running.
--   If running in detached mode (`-d`), run:
-    ```bash
-    docker-compose down
-    ```
--   To stop containers _and remove database volumes_ (useful for a completely fresh start, **data will be lost**):
-    ```bash
-    docker-compose down -v
-    ```
+-   If running in the foreground, press `Ctrl+C`.
+-   If running in detached mode (`-d`), run: `docker-compose down`
+-   To stop containers _and remove database/Redis volumes_ (**data will be lost**): `docker-compose down -v`
 
 ---
 
 ## Versioning and Releases
 
-This project uses `standard-version` for automated versioning and changelog generation based on Conventional Commits.
+This project uses `standard-version`.
 
-1.  **Commit Changes:** Make sure your commit messages follow the Conventional Commits specification (e.g., `feat: add product search`, `fix(auth): resolve token expiry issue`).
-2.  **Run Release:** When ready to release a new version:
-    ```bash
-    npm run release
-    ```
-    This will bump the version in `package.json`, update `CHANGELOG.md`, commit these changes, and create a Git tag.
-3.  **Push Changes:** Push the commit and tags to your remote repository:
-    ```bash
-    git push --follow-tags origin main
-    ```
+1.  Commit changes following [Conventional Commits](https://www.conventionalcommits.org/).
+2.  Run `npm run release` to bump the version, update `CHANGELOG.md`, commit, and tag.
+3.  Push: `git push --follow-tags origin main` (or your branch).
