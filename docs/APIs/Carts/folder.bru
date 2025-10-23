@@ -1,0 +1,210 @@
+meta {
+  name: Carts
+  seq: 5
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  # Warung Madura API - Shopping Cart
+  
+  This document describes the API endpoints for managing the user's shopping cart using Redis.
+  
+  **Authentication:** All cart endpoints require a valid JWT Bearer token in the `Authorization` header.
+  
+  ***
+  
+  ## Endpoints
+  
+  ### 1. View Cart
+  
+  Retrieves the current contents of the authenticated user's shopping cart, including product details and total amount.
+  
+  * **Method:** `GET`
+  * **Path:** `/api/cart`
+  * **Authentication:** Required (Bearer Token).
+  * **Request Body:** None.
+  * **Success Response (200 OK):**
+  
+      ```json
+      {
+        "status": 200,
+        "message": "Cart retrieved successfully",
+        "data": {
+          "items": [
+            {
+              "productId": "uuid-string-product-1",
+              "name": "Product Name 1",
+              "price": "15000.00", // Current price
+              "quantity": 2,
+              "lineTotal": 30000.00 // Calculated: price * quantity
+            },
+            {
+              "productId": "uuid-string-product-2",
+              "name": "Product Name 2",
+              "price": "25000.00",
+              "quantity": 1,
+              "lineTotal": 25000.00
+            }
+            // ... more items
+          ],
+          "totalAmount": 55000.00 // Calculated sum of lineTotals
+        }
+      }
+      ```
+      *(Note: If the cart is empty, `items` will be an empty array and `totalAmount` will be 0).*
+  
+  * **Error Responses:**
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `500 Internal Server Error`: General server error (e.g., Redis connection issue).
+  
+  ---
+  
+  ### 2. Add/Update Item in Cart
+  
+  Adds a specified quantity of a product to the cart. If the product already exists in the cart, its quantity is updated (overwritten) with the provided value.
+  
+  * **Method:** `POST`
+  * **Path:** `/api/cart`
+  * **Authentication:** Required (Bearer Token).
+  * **Request Body:** `application/json`
+  
+      ```json
+      {
+        "product_id": "uuid-string-of-product",
+        "quantity": 3
+      }
+      ```
+  
+      * `product_id` (string, required): The UUID of the product to add/update.
+      * `quantity` (integer, required): The positive integer quantity to set for the product.
+  
+  * **Success Response (200 OK):** (Returns the updated cart view)
+  
+      ```json
+      {
+        "status": 200,
+        "message": "Item added/updated in cart",
+        "data": { // Updated cart contents
+          "items": [
+             // ... items including the added/updated one ...
+           ],
+          "totalAmount": 70000.00 // Updated total
+        }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `400 Bad Request`: "Quantity must be positive."
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `404 Not Found`: `Product with ID [...] not found.`
+      * `422 Unprocessable Entity`: Validation errors (missing fields, invalid UUID, non-positive quantity). See `errors` array.
+      * `500 Internal Server Error`: General server error.
+  
+  ---
+  
+  ### 3. Update Specific Item Quantity
+  
+  Updates the quantity of a specific item already in the cart. Setting quantity to `0` will remove the item.
+  
+  * **Method:** `PUT`
+  * **Path:** `/api/cart/items/:productId`
+  * **Authentication:** Required (Bearer Token).
+  * **URL Parameters:**
+      * `productId` (string, required): The UUID of the product item in the cart to update.
+  * **Request Body:** `application/json`
+  
+      ```json
+      {
+        "quantity": 1
+      }
+      ```
+  
+      * `quantity` (integer, required): The new non-negative integer quantity. Use `0` to remove the item.
+  
+  * **Success Response (200 OK):** (Returns the updated cart view)
+  
+      ```json
+      {
+        "status": 200,
+        "message": "Cart item quantity updated",
+        "data": { // Updated cart contents
+          "items": [
+             // ... items with updated quantity ...
+           ],
+          "totalAmount": 40000.00 // Updated total
+        }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `400 Bad Request`: "Quantity must be non-negative." (if validation allows negative)
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `404 Not Found`: `Product with ID [...] not found.` (if product validation is done)
+      * `422 Unprocessable Entity`: Validation errors (invalid `productId` format in URL, missing/invalid quantity). See `errors` array.
+      * `500 Internal Server Error`: General server error.
+  
+  ---
+  
+  ### 4. Remove Specific Item from Cart
+  
+  Removes a single product item entirely from the cart, regardless of its quantity.
+  
+  * **Method:** `DELETE`
+  * **Path:** `/api/cart/items/:productId`
+  * **Authentication:** Required (Bearer Token).
+  * **URL Parameters:**
+      * `productId` (string, required): The UUID of the product item to remove from the cart.
+  * **Request Body:** None.
+  * **Success Response (200 OK):** (Returns the updated cart view)
+  
+      ```json
+      {
+        "status": 200,
+        "message": "Item removed from cart",
+        "data": { // Updated cart contents
+          "items": [
+             // ... remaining items ...
+           ],
+          "totalAmount": 15000.00 // Updated total
+        }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `404 Not Found`: (Optional, if service checks if item existed) `Product ID [...] not found in cart.`
+      * `422 Unprocessable Entity`: Validation errors (invalid `productId` format in URL).
+      * `500 Internal Server Error`: General server error.
+  
+  ---
+  
+  ### 5. Clear Cart
+  
+  Removes all items from the authenticated user's shopping cart.
+  
+  * **Method:** `DELETE`
+  * **Path:** `/api/cart`
+  * **Authentication:** Required (Bearer Token).
+  * **Request Body:** None.
+  * **Success Response (200 OK):**
+  
+      ```json
+      {
+        "status": 200,
+        "message": "Cart cleared successfully",
+        "data": { // Returns empty cart structure
+          "items": [],
+          "totalAmount": 0
+        }
+      }
+      ```
+  
+  * **Error Responses:**
+      * `401 Unauthorized`: Invalid or missing authentication token.
+      * `500 Internal Server Error`: General server error.
+  
+  ***
+}

@@ -13,6 +13,7 @@ services:
       - .env
     depends_on:
       - db
+      - redis
     networks:
       - warung_network
 
@@ -22,11 +23,19 @@ services:
     ports:
       - "${DB_PORT:-5432}:5432"
     environment:
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
-      POSTGRES_DB: ${DB_DATABASE:-warung_db}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
     volumes:
       - warung_db_data:/var/lib/postgresql/data
+    networks:
+      - warung_network
+
+  redis:
+    image: redis:6-alpine
+    container_name: warung_redis
+    ports:
+      - "6379:6379"
     networks:
       - warung_network
 

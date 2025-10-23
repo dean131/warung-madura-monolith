@@ -7,6 +7,7 @@ module.exports = {
   env: process.env.APP_ENV || "development",
   accessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY || "15m",
   refreshTokenExpiry: process.env.REFRESH_TOKEN_EXPIRY || "7d",
+  redisUrl: process.env.REDIS_URL || "127.0.0.1:6379",
   db: {
     client: process.env.DB_CLIENT,
     host: process.env.DB_HOST,

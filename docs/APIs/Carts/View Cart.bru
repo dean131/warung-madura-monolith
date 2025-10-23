@@ -1,0 +1,16 @@
+meta {
+  name: View Cart
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/cart
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
