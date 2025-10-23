@@ -1,0 +1,22 @@
+meta {
+  name: List Products
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/products?limit=2
+  body: none
+  auth: inherit
+}
+
+params:query {
+  limit: 2
+  ~before: eyJjcmVhdGVkQXQiOiIyMDI1LTEwLTIwVDA2OjAzOjE1LjE3NFoiLCJpZCI6IjljMDU5MjNhLWMzN2QtNGRlNi04ZTg1LTgzNzg0NTUwNzE1OSJ9
+  ~after: eyJjcmVhdGVkQXQiOiIyMDI1LTEwLTIwVDA2OjAzOjE1LjE3NFoiLCJpZCI6IjljMDU5MjNhLWMzN2QtNGRlNi04ZTg1LTgzNzg0NTUwNzE1OSJ9
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

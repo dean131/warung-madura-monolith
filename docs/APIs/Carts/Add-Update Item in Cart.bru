@@ -1,0 +1,23 @@
+meta {
+  name: Add/Update Item in Cart
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/cart
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "product_id": "576882b4-35ed-42f2-9f5a-bb9c075745f2",
+    "quantity": 4
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
